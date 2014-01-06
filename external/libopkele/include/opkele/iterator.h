@@ -184,8 +184,7 @@ namespace opkele {
 		    bool empty;
 
 		    map_keys_iterator() : empty(true) { }
-		    map_keys_iterator(const IT& _bi,
-			    const IT& _ei)
+		    map_keys_iterator(const IT& _bi, const IT& _ei)
 			: it(_bi), ei(_ei) { empty = (it==ei); }
 		    map_keys_iterator(const self_type& x)
 			: it(x.it), ei(x.ei), empty(x.empty) { }

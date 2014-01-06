@@ -51,9 +51,8 @@ public:
 class example_op_t : public opkele::verify_OP {
     public:
     mongoose_connection_t& mc;
-	//kingate::cgi_gateway& gw;
-	opdb_t db;
-	kingate::cookie htc;
+    opdb_t db;
+	 kingate::cookie htc;
 
 	example_op_t(mongoose_connection_t& c)
     : mc(c) {
@@ -191,8 +190,7 @@ class example_op_t : public opkele::verify_OP {
 	}
 
 	const string get_op_endpoint() const {
-	    //return get_self_url(mc);
-        return "";
+	    return get_self_url(mc);
 	}
 
 };
@@ -203,6 +201,7 @@ static void* callback(enum mg_event event, struct mg_connection *conn) {
           
          mongoose_connection_t mc(conn);
        
+         ostringstream status;
          ostringstream header;
          ostringstream content_type;
          ostringstream content;
@@ -210,7 +209,7 @@ static void* callback(enum mg_event event, struct mg_connection *conn) {
          string op;
          if (mc.has_param("op"))
              op = mc.get_param("op");
-        
+       
          string message;
          if(op=="set_password") {
              example_op_t OP(mc);
@@ -274,10 +273,10 @@ static void* callback(enum mg_event event, struct mg_connection *conn) {
         }else if(op=="id_res" || op=="cancel") {
             kingate_openid_message_t inm(mc);
             example_op_t OP(mc);
-            if(mc.get_param("hts_id")!=OP.htc.get_value())
-           throw opkele::exception(OPKELE_CP_ "toying around, huh?");
+            if (mc.get_param("hts_id") != OP.htc.get_value())
+               throw opkele::exception(OPKELE_CP_ "toying around, huh?");
             opkele::sreg_t sreg;
-             OP.checkid_(inm,sreg);
+            OP.checkid_(inm, sreg);
             OP.cookie_header(header);
             opkele::openid_message_t om;
             if(op=="id_res") {
@@ -290,15 +289,15 @@ static void* callback(enum mg_event event, struct mg_connection *conn) {
            sreg.set_field(opkele::sreg_t::field_fullname,"Ann O'Nymus");
            sreg.set_field(opkele::sreg_t::field_gender,"F");
            sreg.setup_response();
-           content <<
-               "Status: 302 Going back to RP with id_res\n"
-               "Location: " << OP.id_res(om,sreg).append_query(OP.get_return_to())
-               << "\r\n";
+               status << "HTTP/1.1 302 Going back to RP with id_res\r\n";
+               header <<
+                  "Location: " << OP.id_res(om, sreg).append_query(OP.get_return_to())
+                  << "\r\n";
             }else{
-           content <<
-               "Status: 302 Going back to RP with cancel\n"
-               "Location: " << OP.cancel(om).append_query(OP.get_return_to())
-               << "\r\n";
+               status << "HTTP/1.1 302 Going back to RP with cancel\r\n";
+               header <<
+                  "Location: " << OP.cancel(om).append_query(OP.get_return_to())
+                  << "\r\n";
             }
             om.to_keyvalues(clog);
         }else if(omode=="associate") {
@@ -334,7 +333,7 @@ static void* callback(enum mg_event event, struct mg_connection *conn) {
             }
             content <<
              "<form method='post'>";
-            inm.to_htmlhiddens(content);
+            inm.to_htmlhiddens(content, "openid.");
             content <<
              "<input type='hidden' name='hts_id'"
               " value='" << opkele::util::attr_escape(OP.htc.get_value()) << "'/>"
@@ -400,12 +399,13 @@ static void* callback(enum mg_event event, struct mg_connection *conn) {
         }
 
         mg_printf(conn,
-                  "HTTP/1.1 200 OK\r\n"
+                  "%s"
                   "%s"
                   "%s"
                   "Content-Length: %lu\r\n"  // Always set Content-Length
                   "\r\n"
                   "%s",
+                  status.tellp() > 0 ? status.str().c_str() : "HTTP/1.1 200 OK\r\n",
                   content_type.str().c_str(),
                   header.str().c_str(),
                   content.str().size(),

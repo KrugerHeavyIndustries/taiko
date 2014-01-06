@@ -77,16 +77,46 @@ class cut_prefix_filterator : public opkele::util::basic_filterator<IT> {
 	    return &this->operator*(); }
 };
 
+template<typename IT>
+class null_filter : public opkele::util::basic_filterator<IT> {
+   public:
+   
+      null_filter() {}
+      null_filter(const IT& _bi, const IT& _ei)
+         : opkele::util::basic_filterator<IT>(_bi, _ei)
+      {
+      }
+   
+      bool is_interesting() const {
+         return true;
+      }
+   
+//      typename IT::reference operator*() const {
+//         assert(!this->empty);
+//         return *this->it;
+//      }
+//   
+//      typename IT::pointer operator->() const {
+//         assert(!this->empty);
+//         return &this->operator*();
+//      }
+};
+
 class kingate_openid_message_t : public opkele::basic_openid_message {
-    typedef join_iterator<opkele::params_t::const_iterator> jitterator;
+   typedef join_iterator<opkele::params_t::const_iterator> jitterator;
 	typedef opkele::util::map_keys_iterator<
 	    jitterator,
 	    fields_iterator::value_type,
 	    fields_iterator::reference,
 	    fields_iterator::pointer> keys_iterator;
+
 	typedef cut_prefix_filterator<keys_iterator> pfilterator;
-    public:
-	const mongoose_connection_t& gw;
+   
+   //typedef null_filter<keys_iterator> nullfilter;
+   
+   public:
+   
+   const mongoose_connection_t& gw;
 
 	kingate_openid_message_t(const mongoose_connection_t& g) : gw(g) { }
    virtual ~kingate_openid_message_t() {}
@@ -104,14 +134,15 @@ class kingate_openid_message_t : public opkele::basic_openid_message {
    }
 
 	fields_iterator fields_begin() const {
-	    return
-		pfilterator( keys_iterator(
-			    jitterator()
-			    .add_range( gw.get.begin(), gw.get.end() )
-			    .add_range( gw.post.begin(), gw.post.end() ),
-			    jitterator()
-			    ), keys_iterator(), "openid." );
+	    return pfilterator(
+                 keys_iterator(
+                    jitterator()
+                    .add_range( gw.get.begin(), gw.get.end() )
+                    .add_range( gw.post.begin(), gw.post.end() ),
+                     jitterator()),
+                         keys_iterator(), "openid.");
 	}
+   
 	fields_iterator fields_end() const {
 	    return pfilterator();
 	}
