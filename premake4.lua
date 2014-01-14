@@ -21,7 +21,7 @@ solution "openidd"
 
       files { "src/**.h", "src/**.cpp", "src/**.c" }
 
-      links { "libopkele", "sqlite3", "curl", "expat", "ssl", "crypto", "z", "tidy" }
+      links { "libopkele", "sqlite3", "curl", "expat", "ssl", "crypto", "z", "tidy", "pam" }
 
       kind "ConsoleApp"
 

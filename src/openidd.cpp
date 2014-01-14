@@ -13,8 +13,9 @@
 #include "utils.h"
 #include "cookies.h"
 #include "mongoose.h"
-
 #include "kingate_openid_message.h"
+
+#include "auth_bsd.h" 
 
 static const char* OK = "";
 
@@ -228,19 +229,26 @@ static void* callback(enum mg_event event, struct mg_connection *conn) {
              message = "password set";
         }else if(op=="login") {
             example_op_t OP(mc);
+            string username = mc.get_param("username");
             string password = mc.get_param("password");
-            sqlite3_mem_t<char*>
-           Sget = sqlite3_mprintf("SELECT s_password FROM setup LIMIT 1");
-            sqlite3_table_t T; int nr,nc;
-            OP.db.get_table(Sget,T,&nr,&nc);
-            if(nr<1)
-               throw opkele::exception(OPKELE_CP_ "no password set");
-            if(password!=T.get(1,0,nc))
-               throw opkele::exception(OPKELE_CP_ "wrong password");
-            OP.set_authorized(true);
-            op.clear();
-            message = "logged in";
-            OP.cookie_header(header);
+         
+            //sqlite3_mem_t<char*>
+            //Sget = sqlite3_mprintf("SELECT s_password FROM setup LIMIT 1");
+            //sqlite3_table_t T; int nr,nc;
+            //OP.db.get_table(Sget,T,&nr,&nc);
+            //if(nr<1)
+             //  throw opkele::exception(OPKELE_CP_ "no password set");
+            //if(password!=T.get(1,0,nc))
+             //  throw opkele::exception(OPKELE_CP_ "wrong password");
+           
+           if (check_auth(username.c_str(), password.c_str()) == STATUS_OK) {
+               OP.set_authorized(true);
+               op.clear();
+               message = "logged in";
+               OP.cookie_header(header);
+           } else {
+              throw opkele::exception(OPKELE_CP_ "wrong password");
+           }
         }else if(op=="logout") {
             example_op_t OP(mc);
             OP.set_authorized(false);
@@ -271,23 +279,23 @@ static void* callback(enum mg_event event, struct mg_connection *conn) {
             "</XRD>"
            "</xrds:XRDS>";
         }else if(op=="id_res" || op=="cancel") {
-            kingate_openid_message_t inm(mc);
-            example_op_t OP(mc);
-            if (mc.get_param("hts_id") != OP.htc.get_value())
-               throw opkele::exception(OPKELE_CP_ "toying around, huh?");
-            opkele::sreg_t sreg;
-            OP.checkid_(inm, sreg);
-            OP.cookie_header(header);
-            opkele::openid_message_t om;
-            if(op=="id_res") {
-           if(!OP.get_authorized())
-               throw opkele::exception(OPKELE_CP_ "not logged in");
-           if(OP.is_id_select()) {
-               OP.select_identity( get_self_url(mc), get_self_url(mc) );
+           kingate_openid_message_t inm(mc);
+           example_op_t OP(mc);
+           if (mc.get_param("hts_id") != OP.htc.get_value())
+              throw opkele::exception(OPKELE_CP_ "toying around, huh?");
+           opkele::sreg_t sreg;
+           OP.checkid_(inm, sreg);
+           OP.cookie_header(header);
+           opkele::openid_message_t om;
+           if(op=="id_res") {
+              if(!OP.get_authorized())
+                 throw opkele::exception(OPKELE_CP_ "not logged in");
+              if(OP.is_id_select()) {
+                 OP.select_identity( get_self_url(mc), get_self_url(mc) );
            }
            sreg.set_field(opkele::sreg_t::field_nickname,"anonymous");
-           sreg.set_field(opkele::sreg_t::field_fullname,"Ann O'Nymus");
-           sreg.set_field(opkele::sreg_t::field_gender,"F");
+           sreg.set_field(opkele::sreg_t::field_fullname,"Ann'O'Nymus");
+           //sreg.set_field(opkele::sreg_t::field_gender,"F");
            sreg.setup_response();
                status << "HTTP/1.1 302 Going back to RP with id_res\r\n";
                header <<
@@ -308,40 +316,63 @@ static void* callback(enum mg_event event, struct mg_connection *conn) {
             content_type << "Content-Type: text/plain\r\n";
             oum.to_keyvalues(content);
         }else if(omode=="checkid_setup") {
+         
             kingate_openid_message_t inm(mc);
             example_op_t OP(mc);
             OP.checkid_(inm,0);
-            content_type << 
-           "Content-Type: text/html\r\n";
-           OP.cookie_header(header);
+            content_type <<
+               "Content-Type: text/html\r\n";
+            OP.cookie_header(header);
            
-            content <<
-           "<html>"
-            "<head>"
-             "<title>test OP: confirm authentication</title>"
-            "</head>"
-            "<body>"
-             "realm: " << OP.get_realm() << "<br/>"
-             "return_to: " << OP.get_return_to() << "<br/>"
-             "claimed_id: " << OP.get_claimed_id() << "<br/>"
-             "identity: " << OP.get_identity() << "<br/>";
-            if(OP.is_id_select()) {
-           OP.select_identity( get_self_url(mc), get_self_url(mc) );
-           content <<
+           if ( OP.get_authorized() ) {
+            
+               content <<
+               "<html>"
+               "<head>"
+               "<title>test OP: confirm authentication</title>"
+               "</head>"
+               "<body>"
+               "realm: " << OP.get_realm() << "<br/>"
+               "return_to: " << OP.get_return_to() << "<br/>"
+               "claimed_id: " << OP.get_claimed_id() << "<br/>"
+               "identity: " << OP.get_identity() << "<br/>";
+               if(OP.is_id_select()) {
+               OP.select_identity( get_self_url(mc), get_self_url(mc) );
+               content <<
                "selected claimed_id: " << OP.get_claimed_id() << "<br/>"
                "selected identity: " << OP.get_identity() << "<br/>";
-            }
-            content <<
-             "<form method='post'>";
-            inm.to_htmlhiddens(content, "openid.");
-            content <<
-             "<input type='hidden' name='hts_id'"
-              " value='" << opkele::util::attr_escape(OP.htc.get_value()) << "'/>"
-             "<input type='submit' name='op' value='id_res'/>"
-             "<input type='submit' name='op' value='cancel'/>"
-             "</form>"
-            "</body>"
-           "</html>";
+               }
+               content <<
+               "<form method='post'>";
+               inm.to_htmlhiddens(content, "openid.");
+               content <<
+               "<input type='hidden' name='hts_id'"
+               " value='" << opkele::util::attr_escape(OP.htc.get_value()) << "'/>"
+               "<input type='submit' name='op' value='id_res'/>"
+               "<input type='submit' name='op' value='cancel'/>"
+               "</form>"
+               "</body>"
+               "</html>";
+
+           } else {
+           
+              content <<
+              "<html>"
+              "<head>"
+              "<title>test OP: authentication</title>"
+              "</head>"
+              "<body>"
+              "<form method='post'>"
+              "login "
+              "<input type='hidden' name='op' value='login'/>"
+              "<input type='username' name='username' value=''/>"
+              "<input type='password' name='password' value=''/>"
+              "<input type='submit' name='submit' value='submit'/>"
+              "</form>"
+              "</body>"
+              "</html>";
+           }
+
         }else if(omode=="check_authentication") {
             kingate_openid_message_t inm(mc);
             example_op_t OP(mc);
@@ -379,6 +410,7 @@ static void* callback(enum mg_event event, struct mg_connection *conn) {
                "<form method='post'>"
                 "set password "
                 "<input type='hidden' name='op' value='set_password'/>"
+                "<input type='username' name='username' value='' />"
                 "<input type='password' name='password' value=''/>"
                 "<input type='submit' name='submit' value='submit'/>"
                "</form>";
@@ -391,6 +423,7 @@ static void* callback(enum mg_event event, struct mg_connection *conn) {
                "<form method='post'>"
                 "login "
                 "<input type='hidden' name='op' value='login'/>"
+                "<input type='username' name='username' value=''/>"
                 "<input type='password' name='password' value=''/>"
                 "<input type='submit' name='submit' value='submit'/>"
                "</form>";
