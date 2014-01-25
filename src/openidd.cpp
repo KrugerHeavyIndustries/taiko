@@ -212,39 +212,16 @@ static void* callback(enum mg_event event, struct mg_connection *conn) {
              op = mc.get_param("op");
        
          string message;
-         if(op=="set_password") {
-             example_op_t OP(mc);
-             string password = mc.get_param("password");
-             sqlite3_mem_t<char*>
-             Sget = sqlite3_mprintf("SELECT s_password FROM setup LIMIT 1");
-             sqlite3_table_t T; int nr,nc;
-             OP.db.get_table(Sget,T,&nr,&nc);
-             if(nr>=1)
-                 throw opkele::exception(OPKELE_CP_ "Password already set");
-             sqlite3_mem_t<char*>
-             Sset = sqlite3_mprintf("INSERT INTO setup (s_password) VALUES (%Q)",
-                                    password.c_str());
-             OP.db.exec(Sset);
-             op.clear();
-             message = "password set";
-        }else if(op=="login") {
+         if(op=="login") {
             example_op_t OP(mc);
             string username = mc.get_param("username");
             string password = mc.get_param("password");
-         
-            //sqlite3_mem_t<char*>
-            //Sget = sqlite3_mprintf("SELECT s_password FROM setup LIMIT 1");
-            //sqlite3_table_t T; int nr,nc;
-            //OP.db.get_table(Sget,T,&nr,&nc);
-            //if(nr<1)
-             //  throw opkele::exception(OPKELE_CP_ "no password set");
-            //if(password!=T.get(1,0,nc))
-             //  throw opkele::exception(OPKELE_CP_ "wrong password");
-           
+            string memoized_params = mc.get_param("memoized_params");
            if (check_auth(username.c_str(), password.c_str()) == STATUS_OK) {
                OP.set_authorized(true);
                op.clear();
-               message = "logged in";
+               status << "HTTP/1.1 302 Going back to OP with checkid_setup after successful login\r\n";
+               header << "Location: " << get_self_url(mc) << "?" << memoized_params << "\r\n";
                OP.cookie_header(header);
            } else {
               throw opkele::exception(OPKELE_CP_ "wrong password");
@@ -316,7 +293,6 @@ static void* callback(enum mg_event event, struct mg_connection *conn) {
             content_type << "Content-Type: text/plain\r\n";
             oum.to_keyvalues(content);
         }else if(omode=="checkid_setup") {
-         
             kingate_openid_message_t inm(mc);
             example_op_t OP(mc);
             OP.checkid_(inm,0);
@@ -324,9 +300,8 @@ static void* callback(enum mg_event event, struct mg_connection *conn) {
                "Content-Type: text/html\r\n";
             OP.cookie_header(header);
            
-           if ( OP.get_authorized() ) {
-            
-               content <<
+           if (OP.get_authorized()) {
+            content <<
                "<html>"
                "<head>"
                "<title>test OP: confirm authentication</title>"
@@ -365,6 +340,15 @@ static void* callback(enum mg_event event, struct mg_connection *conn) {
               "<form method='post'>"
               "login "
               "<input type='hidden' name='op' value='login'/>"
+              "<input type='hidden' name='memoized_params' value='"
+              << "openid.assoc_handle=" << "kfCHgLfuSZmt4E62t4%2BzBw%3D%3D" << "&"
+              << "openid.claimed_id=" << opkele::util::attr_escape(OP.get_claimed_id()) << "&"
+              << "openid.identity=" << opkele::util::attr_escape(OP.get_identity()) << "&"
+              << "openid.mode=checkid_setup" << "&"
+              << "openid.ns=" << opkele::util::attr_escape(OIURI_OPENID20) << "&"
+              << "openid.realm=" << opkele::util::attr_escape(OP.get_realm()) << "&"
+              << "openid.return_to=" << opkele::util::attr_escape(OP.get_return_to())
+              << "'/>" <<
               "<input type='username' name='username' value=''/>"
               "<input type='password' name='password' value=''/>"
               "<input type='submit' name='submit' value='submit'/>"
@@ -386,10 +370,10 @@ static void* callback(enum mg_event event, struct mg_connection *conn) {
             string idsel;
             if(mc.has_param("idsel"))
                idsel = "&idsel=idsel";
-           content_type << "Content-Type: text/html\r\n";
-           OP.cookie_header(header) << "X-XRDS-Location: " << get_self_url(mc) << "?op=xrds" << idsel << "\r\n";
+            content_type << "Content-Type: text/html\r\n";
+            OP.cookie_header(header) << "X-XRDS-Location: " << get_self_url(mc) << "?op=xrds" << idsel << "\r\n";
           
-           content <<
+            content <<
            "<html>"
            "<head>"
             "<title>test OP</title>"
@@ -401,20 +385,8 @@ static void* callback(enum mg_event event, struct mg_connection *conn) {
            "<a href='" << get_self_url(mc) << "?op=xrds" << idsel << "'>XRDS document</a>"
            "<br/>"
            "<h1>" << message << "</h1>";
-            sqlite3_mem_t<char*>
-           S = sqlite3_mprintf("SELECT s_password FROM setup LIMIT 1");
-            sqlite3_table_t T; int nr,nc;
-            OP.db.get_table(S,T,&nr,&nc);
-            if(nr<1) {
-           content <<
-               "<form method='post'>"
-                "set password "
-                "<input type='hidden' name='op' value='set_password'/>"
-                "<input type='username' name='username' value='' />"
-                "<input type='password' name='password' value=''/>"
-                "<input type='submit' name='submit' value='submit'/>"
-               "</form>";
-            }else if(OP.get_authorized()) {
+           
+           if(OP.get_authorized()) {
            content <<
                "<br/>"
                "<a href='" << get_self_url(mc) << "?op=logout'>logout</a>";
