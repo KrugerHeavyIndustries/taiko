@@ -340,14 +340,14 @@ static void* callback(enum mg_event event, struct mg_connection *conn) {
               "<form method='post'>"
               "login "
               "<input type='hidden' name='op' value='login'/>"
-              "<input type='hidden' name='memoized_params' value='"
-              << "openid.assoc_handle=" << "kfCHgLfuSZmt4E62t4%2BzBw%3D%3D" << "&"
-              << "openid.claimed_id=" << opkele::util::attr_escape(OP.get_claimed_id()) << "&"
-              << "openid.identity=" << opkele::util::attr_escape(OP.get_identity()) << "&"
-              << "openid.mode=checkid_setup" << "&"
-              << "openid.ns=" << opkele::util::attr_escape(OIURI_OPENID20) << "&"
-              << "openid.realm=" << opkele::util::attr_escape(OP.get_realm()) << "&"
-              << "openid.return_to=" << opkele::util::attr_escape(OP.get_return_to())
+              "<input type='hidden' name='memoized_params' value='" << inm.query_string()
+              //<< "openid.assoc_handle=" << "kfCHgLfuSZmt4E62t4%2BzBw%3D%3D" << "&"
+              //<< "openid.claimed_id=" << opkele::util::attr_escape(OP.get_claimed_id()) << "&"
+              //<< "openid.identity=" << opkele::util::attr_escape(OP.get_identity()) << "&"
+              //<< "openid.mode=checkid_setup" << "&"
+              //<< "openid.ns=" << opkele::util::attr_escape(OIURI_OPENID20) << "&"
+              //<< "openid.realm=" << opkele::util::attr_escape(OP.get_realm()) << "&"
+              //<< "openid.return_to=" << opkele::util::attr_escape(OP.get_return_to())
               << "'/>" <<
               "<input type='username' name='username' value=''/>"
               "<input type='password' name='password' value=''/>"
