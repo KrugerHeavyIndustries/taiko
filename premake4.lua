@@ -16,12 +16,15 @@ solution "openidd"
       
       language "C++"
 
-      includedirs { "external/libopkele/include" }
-      libdirs { "../libopkele/lib/.libs" }
+      includedirs { "external/libopkele/include", "/usr/local/Cellar/libconfuse/2.7/include" }
+      libdirs { "../libopkele/lib/.libs", "/usr/local/Cellar/libconfuse/2.7/lib" }
 
       files { "src/**.h", "src/**.cpp", "src/**.c" }
 
-      links { "libopkele", "sqlite3", "curl", "expat", "ssl", "crypto", "z", "tidy", "pam" }
+      links { 
+         "sqlite3", "curl", "expat", "ssl", "crypto", "z", "tidy", "pam",
+         "libconfuse"
+      }
 
       kind "ConsoleApp"
 

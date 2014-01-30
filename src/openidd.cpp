@@ -16,10 +16,14 @@
 #include "kingate_openid_message.h"
 
 #include "auth_bsd.h" 
+#include "users.h"
 
 static const char* OK = "";
 
 using namespace std;
+using namespace taiko;
+
+users_t users;
 
 static const string get_self_url(const mongoose_connection_t& mc) {
     string rv = mc.is_ssl() ? "https://" : "http://";
@@ -85,6 +89,7 @@ class example_op_t : public opkele::verify_OP {
 			(int)a,htc.get_value().c_str());
 	    db.exec(S);
 	}
+   
 	bool get_authorized() {
 	    sqlite3_mem_t<char*>
 		S = sqlite3_mprintf(
@@ -97,6 +102,29 @@ class example_op_t : public opkele::verify_OP {
 	    assert(nr==1); assert(nc=1);
 	    return opkele::util::string_to_long(T.get(1,0,nc));
 	}
+   
+   void set_username(const string& username) {
+      sqlite3_mem_t<char*>
+		S = sqlite3_mprintf(
+         "UPDATE ht_sessions"
+         " SET username=%Q"
+         " WHERE hts_id=%Q",
+         username.c_str(),htc.get_value().c_str());
+      db.exec(S);
+   }
+   
+   string get_username() {
+      sqlite3_mem_t<char*>
+		S = sqlite3_mprintf(
+         "SELECT username"
+         " FROM ht_sessions"
+         " WHERE hts_id=%Q",
+         htc.get_value().c_str());
+      sqlite3_table_t T; int nr,nc;
+      db.get_table(S,T,&nr,&nc);
+      assert(nr==1); assert(nc=1);
+      return T.get(1,0,nc);
+   }
 
 	ostream& cookie_header(ostream& o) const {
 	    o << "Set-Cookie: " << htc.set_cookie_header() << "\r\n";
@@ -217,15 +245,20 @@ static void* callback(enum mg_event event, struct mg_connection *conn) {
             string username = mc.get_param("username");
             string password = mc.get_param("password");
             string memoized_params = mc.get_param("memoized_params");
-           if (check_auth(username.c_str(), password.c_str()) == STATUS_OK) {
-               OP.set_authorized(true);
-               op.clear();
-               status << "HTTP/1.1 302 Going back to OP with checkid_setup after successful login\r\n";
-               header << "Location: " << get_self_url(mc) << "?" << memoized_params << "\r\n";
-               OP.cookie_header(header);
-           } else {
-              throw opkele::exception(OPKELE_CP_ "wrong password");
-           }
+            if (users.has_user(username)) {
+               if (check_auth(username.c_str(), password.c_str()) == STATUS_OK) {
+                  OP.set_authorized(true);
+                  OP.set_username(username);
+                  op.clear();
+                  status << "HTTP/1.1 302 Going back to OP with checkid_setup after successful login\r\n";
+                  header << "Location: " << get_self_url(mc) << "?" << memoized_params << "\r\n";
+                  OP.cookie_header(header);
+               } else {
+                  throw opkele::exception(OPKELE_CP_ "wrong password");
+               }
+            } else {
+               throw opkele::exception(OPKELE_CP_ "user not setup for taiko use");
+            }
         }else if(op=="logout") {
             example_op_t OP(mc);
             OP.set_authorized(false);
@@ -268,11 +301,15 @@ static void* callback(enum mg_event event, struct mg_connection *conn) {
               if(!OP.get_authorized())
                  throw opkele::exception(OPKELE_CP_ "not logged in");
               if(OP.is_id_select()) {
-                 OP.select_identity( get_self_url(mc), get_self_url(mc) );
+                 OP.select_identity(get_self_url(mc), get_self_url(mc));
            }
-           sreg.set_field(opkele::sreg_t::field_nickname,"anonymous");
-           sreg.set_field(opkele::sreg_t::field_fullname,"Ann'O'Nymus");
-           //sreg.set_field(opkele::sreg_t::field_gender,"F");
+           string username = OP.get_username();
+           if (!users.has_user(username)) {
+              throw opkele::exception(OPKELE_CP_ "user not setup to use taiko");
+           }
+           const user_t& user = users.get_user(username);
+           sreg.set_field(opkele::sreg_t::field_fullname,user.get_name());
+           sreg.set_field(opkele::sreg_t::field_email,user.get_email());
            sreg.setup_response();
                status << "HTTP/1.1 302 Going back to RP with id_res\r\n";
                header <<
@@ -312,10 +349,10 @@ static void* callback(enum mg_event event, struct mg_connection *conn) {
                "claimed_id: " << OP.get_claimed_id() << "<br/>"
                "identity: " << OP.get_identity() << "<br/>";
                if(OP.is_id_select()) {
-               OP.select_identity( get_self_url(mc), get_self_url(mc) );
-               content <<
-               "selected claimed_id: " << OP.get_claimed_id() << "<br/>"
-               "selected identity: " << OP.get_identity() << "<br/>";
+                  OP.select_identity(get_self_url(mc), get_self_url(mc));
+                  content <<
+                   "selected claimed_id: " << OP.get_claimed_id() << "<br/>"
+                   "selected identity: " << OP.get_identity() << "<br/>";
                }
                content <<
                "<form method='post'>";
@@ -330,7 +367,6 @@ static void* callback(enum mg_event event, struct mg_connection *conn) {
                "</html>";
 
            } else {
-           
               content <<
               "<html>"
               "<head>"
@@ -340,15 +376,7 @@ static void* callback(enum mg_event event, struct mg_connection *conn) {
               "<form method='post'>"
               "login "
               "<input type='hidden' name='op' value='login'/>"
-              "<input type='hidden' name='memoized_params' value='" << inm.query_string()
-              //<< "openid.assoc_handle=" << "kfCHgLfuSZmt4E62t4%2BzBw%3D%3D" << "&"
-              //<< "openid.claimed_id=" << opkele::util::attr_escape(OP.get_claimed_id()) << "&"
-              //<< "openid.identity=" << opkele::util::attr_escape(OP.get_identity()) << "&"
-              //<< "openid.mode=checkid_setup" << "&"
-              //<< "openid.ns=" << opkele::util::attr_escape(OIURI_OPENID20) << "&"
-              //<< "openid.realm=" << opkele::util::attr_escape(OP.get_realm()) << "&"
-              //<< "openid.return_to=" << opkele::util::attr_escape(OP.get_return_to())
-              << "'/>" <<
+              "<input type='hidden' name='memoized_params' value='" << inm.query_string() << "'/>" <<
               "<input type='username' name='username' value=''/>"
               "<input type='password' name='password' value=''/>"
               "<input type='submit' name='submit' value='submit'/>"
@@ -424,12 +452,14 @@ static void* callback(enum mg_event event, struct mg_connection *conn) {
 }
 
 int main(int argc, char** arg) {
-    struct mg_context *ctx;
-    const char *options[] = {"listening_ports", "8080", NULL};
+   struct mg_context *ctx;
+   const char *options[] = {"listening_ports", "8080", NULL};
+   
+   users.parse_user_config();
+   
+   ctx = mg_start(&callback, &users, options);
+   getchar();  // Wait until user hits "enter"
+   mg_stop(ctx);
 
-    ctx = mg_start(&callback, NULL, options);
-    getchar();  // Wait until user hits "enter"
-    mg_stop(ctx);
-
-    return 0;
+   return 0;
 }

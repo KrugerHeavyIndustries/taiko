@@ -22,6 +22,7 @@ const char * __OP_db_bootstrap =
 ""
 "CREATE TABLE ht_sessions ("
 " hts_id text NOT NULL PRIMARY KEY,"
+" username text NOT NULL DEFAULT '',"
 " authorized integer NOT NULL DEFAULT 0"
 ");"
 ;

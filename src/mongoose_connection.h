@@ -10,6 +10,7 @@
 #define MONGOOSE_CONNECTION_H
 
 #include "exception.h"
+#include "users.h"
 
 class mongoose_connection_t {
     
@@ -109,7 +110,7 @@ public:
     int remote_port() const {
         return mg_get_request_info(_connection)->remote_port;
     }
-    
+   
 private:
     
     static void parse_query(string q, params_t& p)  {
