@@ -6,12 +6,21 @@
 //
 //
 
-#ifndef MONGOOSE_CONNECTION_H
-#define MONGOOSE_CONNECTION_H
+#ifndef _TAIKO_MONGOOSE_CONNECTION_H_
+#define _TAIKO_MONGOOSE_CONNECTION_H_
+
+#include <map>
 
 #include "exception.h"
 #include "users.h"
+#include "mongoose.h"
+#include "cookies.h"
+#include "utils.h"
 
+
+namespace taiko {
+   using namespace std;
+   
 class mongoose_connection_t {
     
 public:
@@ -132,5 +141,6 @@ private:
 
 };
 
+} // namespace taiko
 
-#endif
+#endif // defined(_TAIKO_MONGOOSE_CONNECTION_H_)

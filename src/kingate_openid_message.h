@@ -1,5 +1,7 @@
 #include "mongoose_connection.h"
 
+namespace taiko {
+   
 template<typename IT>
 class join_iterator : public iterator<
 		      input_iterator_tag,typename IT::value_type,
@@ -147,3 +149,5 @@ class kingate_openid_message_t : public opkele::basic_openid_message {
 	    return pfilterator();
 	}
 };
+   
+} //  namespace taiko

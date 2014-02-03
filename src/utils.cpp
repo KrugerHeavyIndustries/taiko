@@ -3,8 +3,12 @@
 #include <string>
 #include <cstdlib>
 
+#include "mongoose_connection.h"
+
 using namespace std;
 
+namespace taiko {
+   
 static const char* SAFE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                 "abcdefghijklmnopqrstuvwxyz"
                                 "0123456789_-";
@@ -52,7 +56,7 @@ string url_decode(const string& str) {
          rv.replace(unscrewed++,1,1,' ');
       }else{
          if((rv.length()-unscrewed)<3)
-            throw exception();
+            throw exception("unexpected length");
          // XXX: ensure it's hex?
          int danger = strtol(rv.substr(unscrewed+1,2).c_str(),NULL,16);
          rv.replace(unscrewed,3,1,danger);
@@ -77,3 +81,16 @@ string http_quote(const string& str) {
         return str;
     return http_quoted_string(str);
 }
+
+const string get_self_url(const mongoose_connection_t& mc) {
+   string rv = mc.is_ssl() ? "https://" : "http://";
+   rv += mc.get_header("Host");
+   string::size_type q = rv.find(':');
+   if (q == string::npos) {
+      rv += ':';
+      rv += mc.is_ssl() ? "443" : "80";
+   }
+   return rv;
+}
+   
+} // namespace taiko

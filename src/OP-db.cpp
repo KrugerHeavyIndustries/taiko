@@ -1,4 +1,7 @@
-const char * __OP_db_bootstrap = 
+
+namespace taiko {
+
+const char * __OP_db_bootstrap =
 "CREATE TABLE assoc ("
 " a_op text,"
 " a_handle text NOT NULL,"
@@ -26,3 +29,5 @@ const char * __OP_db_bootstrap =
 " authorized integer NOT NULL DEFAULT 0"
 ");"
 ;
+
+} // namespace taiko

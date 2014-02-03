@@ -2,6 +2,8 @@
 #include "utils.h"
 
 namespace kingate {
+   
+   using namespace taiko;
 
     /*
      * RFC 2109:

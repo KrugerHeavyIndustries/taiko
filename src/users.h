@@ -6,15 +6,15 @@
 //
 //
 
-#ifndef __OPENIDD_USERS_T_
-#define __OPENIDD_USERS_T_
+#ifndef _TAIKO_USERS_T_
+#define _TAIKO_USERS_T_
 
 #include <string>
 #include <map>
 #include <iostream>
 
-
 namespace taiko {
+   
    using namespace std;
    
    class user_t {
@@ -57,6 +57,6 @@ namespace taiko {
       void parse_user_config();
    };
    
-}
+} // namespace taiko
 
-#endif /* defined(__OPENIDD_USERS_T_) */
+#endif /* defined(_TAIKO_USERS_T_) */

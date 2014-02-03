@@ -7,7 +7,7 @@ namespace taiko {
    
 class exception : public std::exception {
 public:
-   exception(const string& m) :
+   exception(const std::string& m) :
       _what(m) {}
 
    virtual ~exception() throw() {
@@ -24,7 +24,7 @@ private:
 
 class exception_notfound : public exception {
 public:
-   explicit exception_notfound(const string& m)
+   explicit exception_notfound(const std::string& m)
    :  exception(m) {
    }
    virtual ~exception_notfound() throw() {

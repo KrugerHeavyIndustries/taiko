@@ -1,8 +1,13 @@
+#ifndef _TAIKO_SQLITE_H_
+#define _TAIKO_SQLITE_H_
+
 #include <sqlite3.h>
 #include <opkele/exception.h>
 
 using namespace std;
 
+namespace taiko {
+   
 class sqlite3_t {
     public:
 	sqlite3 *_D;
@@ -72,3 +77,7 @@ class sqlite3_table_t {
 	    return _T[r*nc+c];
 	}
 };
+   
+} // namespace taiko
+
+#endif // if defined(_TAIKO_SQLITE_H_)
