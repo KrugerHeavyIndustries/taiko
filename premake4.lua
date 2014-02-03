@@ -17,13 +17,13 @@ solution "openidd"
       language "C++"
 
       includedirs { "external/libopkele/include", "/usr/local/Cellar/libconfuse/2.7/include" }
-      libdirs { "../libopkele/lib/.libs", "/usr/local/Cellar/libconfuse/2.7/lib" }
+      libdirs { "/usr/local/Cellar/libconfuse/2.7/lib" }
 
       files { "src/**.h", "src/**.cpp", "src/**.c" }
 
       links { 
-         "sqlite3", "curl", "expat", "ssl", "crypto", "z", "tidy", "pam",
-         "libconfuse"
+         "sqlite3", "curl", "expat", "ssl", "crypto", "z", "tidy", "pam", "libopkele",
+         "confuse"
       }
 
       kind "ConsoleApp"
@@ -43,7 +43,6 @@ solution "openidd"
       includedirs { "external/libopkele/include" } 
 
       files { "external/libopkele/lib/**.cc" }
-
 
       kind "StaticLib"
 

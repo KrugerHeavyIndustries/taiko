@@ -18,6 +18,9 @@
 #include <opkele/sreg.h>
 
 #include "mongoose.h"
+#include "sqlite.h"
+#include "mongoose_connection.h"
+#include "uuid/uuid.h"
 
 namespace taiko {
    
