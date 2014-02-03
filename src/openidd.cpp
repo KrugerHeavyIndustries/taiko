@@ -35,7 +35,10 @@ static void* handle_new_request(struct mg_connection* conn) {
    ostringstream header;
    ostringstream content_type;
    ostringstream content;
-   
+
+   if (!mc.is_ssl())
+      throw taiko::exception("SSL connection required");
+      
    string op;
    if (mc.has_param("op"))
       op = mc.get_param("op");
@@ -45,20 +48,24 @@ static void* handle_new_request(struct mg_connection* conn) {
       taiko_op_t OP(mc);
       string username = mc.get_param("username");
       string password = mc.get_param("password");
-      string memoized_params = mc.get_param("memoized_params");
       if (users.has_user(username)) {
          if (check_auth(username.c_str(), password.c_str()) == STATUS_OK) {
             OP.set_authorized(true);
             OP.set_username(username);
             op.clear();
-            status << "HTTP/1.1 302 Going back to OP with checkid_setup after successful login\r\n";
-            header << "Location: " << get_self_url(mc) << "?" << memoized_params << "\r\n";
+            if (mc.has_param("memoized_params")) {
+               string memoized_params = mc.get_param("memoized_params");
+               status << "HTTP/1.1 302 Going back to OP with checkid_setup after successful login\r\n";
+               header << "Location: " << get_self_url(mc) << "?" << memoized_params << "\r\n";
+            } else {
+               status << "HTTP/1.1 200 OK\r\n";
+            }
             OP.cookie_header(header);
          } else {
-            throw opkele::exception(OPKELE_CP_ "wrong password");
+            throw taiko::exception("wrong password or username");
          }
       } else {
-         throw opkele::exception(OPKELE_CP_ "user not setup for taiko use");
+         throw taiko::exception("wrong password or username");
       }
    }else if(op=="logout") {
       taiko_op_t OP(mc);
@@ -93,20 +100,20 @@ static void* handle_new_request(struct mg_connection* conn) {
       kingate_openid_message_t inm(mc);
       taiko_op_t OP(mc);
       if (mc.get_param("hts_id") != OP.htc.get_value())
-         throw opkele::exception(OPKELE_CP_ "toying around, huh?");
+         throw taiko::exception("toying around, huh?");
       opkele::sreg_t sreg;
       OP.checkid_(inm, sreg);
       OP.cookie_header(header);
       opkele::openid_message_t om;
       if(op=="id_res") {
          if(!OP.get_authorized())
-            throw opkele::exception(OPKELE_CP_ "not logged in");
+            throw taiko::exception("not logged in");
          if(OP.is_id_select()) {
             OP.select_identity(get_self_url(mc), get_self_url(mc));
          }
          string username = OP.get_username();
          if (!users.has_user(username)) {
-            throw opkele::exception(OPKELE_CP_ "user not setup to use taiko");
+            throw taiko::exception("user not setup to use taiko");
          }
          const user_t& user = users.get_user(username);
          sreg.set_field(opkele::sreg_t::field_fullname,user.get_name());
@@ -116,7 +123,7 @@ static void* handle_new_request(struct mg_connection* conn) {
          header <<
          "Location: " << OP.id_res(om, sreg).append_query(OP.get_return_to())
          << "\r\n";
-      }else{
+      } else {
          status << "HTTP/1.1 302 Going back to RP with cancel\r\n";
          header <<
          "Location: " << OP.cancel(om).append_query(OP.get_return_to())
@@ -253,15 +260,15 @@ static void* callback(enum mg_event event, struct mg_connection *conn) {
    if (event == MG_NEW_REQUEST) {
       try {
          return handle_new_request(conn);
-      } catch (opkele::exception& e) {
+      } catch (taiko::exception& e) {
          mg_printf(conn,
                    "HTTP/1.1 200 OK\r\n"
                    "Content-Type: text/plain\r\n"
                    "Content-Length: %lu\r\n"  // Always set Content-Length
                    "\r\n"
                    "%s",
-                   strlen(e.what()),
-                   e.what());
+                   e.what().size(),
+                   e.what().c_str());
          return static_cast<void*>(&OK);
       }
    } else {
