@@ -1,4 +1,4 @@
-solution "openidd"
+solution "taikod"
    
    configurations { "Debug", "Release" }
 
@@ -12,7 +12,7 @@ solution "openidd"
    configuration "Release"
       targetdir "bin/release"
 
-   project "openidd" 
+   project "taikod" 
       
       language "C++"
 
