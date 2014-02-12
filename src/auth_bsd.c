@@ -39,6 +39,9 @@
 #endif /* SHADOW_BSD */
 
 #ifdef SHADOW_NONE
+#if defined(__linux__)
+#define _XOPEN_SOURCE
+#endif
 #include <unistd.h>
 #include <pwd.h>
 

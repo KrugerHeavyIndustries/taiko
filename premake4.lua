@@ -22,7 +22,7 @@ solution "taikod"
       files { "src/**.h", "src/**.cpp", "src/**.c" }
 
       links { 
-         "sqlite3", "curl", "expat", "ssl", "crypto", "z", "tidy", "pam", "libopkele",
+         "sqlite3", "curl", "expat", "ssl", "crypto", "z", "tidy", "libopkele",
          "confuse"
       }
 
@@ -36,13 +36,22 @@ solution "taikod"
          defines {}
          flags { "Optimize" }
 
+      configuration "macosx" 
+         links { "pam" }
+
+      configuration "linux" 
+         links { "dl", "uuid", "crypt" }
+
    project "libopkele"
 
       language "C++"
 
       includedirs { "external/libopkele/include" } 
 
-      files { "external/libopkele/lib/**.cc" }
+      files { 
+         "external/libopkele/lib/**.cc",
+         "external/libopkele/include/**.h" 
+      }
 
       kind "StaticLib"
 

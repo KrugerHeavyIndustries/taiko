@@ -7,8 +7,12 @@
 #include <tr1/memory>
 #endif
 
-//namespace opkele {
- //   namespace tr1mem = std::tr1;
-//}
+namespace opkele {
+#if defined(__APPLE__)
+   namespace ptr = std;
+#else
+   namespace ptr = std::tr1;
+#endif
+}
 
 #endif /* __OPKELE_TR1_MEM_H */

@@ -10,6 +10,8 @@
 #define _TAIKO_TAIKO_OP_
 
 #include <iostream>
+#include <cstdlib>
+#include <algorithm>
 #include <opkele/verify_op.h>
 #include <opkele/exception.h>
 #include <opkele/association.h>

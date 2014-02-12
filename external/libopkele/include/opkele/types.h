@@ -116,7 +116,7 @@ namespace opkele {
     /**
      * the shared_ptr<> for association_t object type
      */
-    typedef std::shared_ptr<association_t> assoc_t;
+    typedef ptr::shared_ptr<association_t> assoc_t;
 
     class basic_fields {
 	public:

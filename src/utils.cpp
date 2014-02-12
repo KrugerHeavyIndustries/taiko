@@ -1,6 +1,7 @@
-#include "util.h"
+#include "utils.h"
 
 #include <string>
+#include <cstring>
 #include <cstdlib>
 
 #include "mongoose_connection.h"
