@@ -1,5 +1,10 @@
 solution "taikod"
-   
+  
+   newoption { 
+      trigger = "no-pam", 
+      description = "Use crypt and system password file directly (for systems without pam)"
+   }
+
    configurations { "Debug", "Release" }
 
    platforms { "native", "x32", "x64" }
@@ -11,6 +16,9 @@ solution "taikod"
 
    configuration "Release"
       targetdir "bin/release"
+
+   configuration "no-pam"
+      defines { "SHADOW_NONE" }
 
    project "taikod" 
       

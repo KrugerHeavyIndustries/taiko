@@ -8,6 +8,8 @@
 #include "confuse.h"
 #include "exception.h"
 
+#define _PATH_TAIKODCONF "/etc/taikod.conf" 
+
 namespace taiko {
    
    int validate_user_callback(cfg_t* cfg, cfg_opt_t* opt) {
@@ -55,7 +57,7 @@ namespace taiko {
       
       cfg_set_validate_func(cfg, "user", &validate_user_callback);
       
-      switch (cfg_parse(cfg, "example.conf"))
+      switch (cfg_parse(cfg, _PATH_TAIKODCONF))
       {
          case CFG_FILE_ERROR:
             break;

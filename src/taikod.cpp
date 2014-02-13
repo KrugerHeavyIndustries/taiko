@@ -20,6 +20,8 @@
 
 #include "taiko_op.h"
 
+#define _PATH_TAIKODCONF "/etc/taikod.conf" 
+
 static const char* OK = "";
 
 using namespace std;
