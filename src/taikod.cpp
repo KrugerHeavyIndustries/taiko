@@ -38,7 +38,7 @@ static void* handle_new_request(struct mg_connection* conn) {
    ostringstream content_type;
    ostringstream content;
 
-   if (!mc.is_ssl())
+   if (!(mc.is_ssl() || mc.is_proxy_ssl()))
       throw taiko::exception("SSL connection required");
       
    string op;
