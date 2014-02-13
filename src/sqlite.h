@@ -2,7 +2,7 @@
 #define _TAIKO_SQLITE_H_
 
 #include <sqlite3.h>
-#include <opkele/exception.h>
+#include "exception.h"
 
 using namespace std;
 
@@ -17,15 +17,15 @@ class sqlite3_t {
 		int r = sqlite3_open(f,&_D);
 		if(r!=SQLITE_OK) {
 		    string msg = sqlite3_errmsg(_D); sqlite3_close(_D);
-		    //throw opkele::exception(OPKELE_CP_ "Failed to open SQLite database: "+msg);
+		    throw taiko::exception(OPKELE_CP_ "Failed to open SQLite database: "+msg);
 		}
 	    }
 	~sqlite3_t() {
 	    if(_D) sqlite3_close(_D);
 	}
 
-	operator const sqlite3*(void) const { return _D; }
-	operator sqlite3*(void) { return _D; }
+	operator const sqlite3* () const { return _D; }
+	operator sqlite3* () { return _D; }
 
 	void exec(const char *sql) {
 	    assert(_D);
@@ -37,7 +37,7 @@ class sqlite3_t {
 	    assert(_D);
 	    char *errm;
 	    if(sqlite3_get_table(_D,sql,resp,nr,nc,&errm)!=SQLITE_OK)
-            throw opkele::exception(OPKELE_CP_ string("Failed to sqlite3_get_table():")+errm);
+            throw taiko::exception(OPKELE_CP_ string("Failed to sqlite3_get_table():")+errm);
 	}
 };
 
@@ -49,8 +49,8 @@ class sqlite3_mem_t {
 	sqlite3_mem_t(T M) :_M(M) { }
 	~sqlite3_mem_t() { if(_M) sqlite3_free(_M); }
 
-	operator const T&(void) const { return _M; }
-	operator T&(void) { return _M; }
+	operator const T& () const { return _M; }
+	operator T& () { return _M; }
 
 	sqlite3_mem_t operator=(T M) {
 	    if(_M) sqlite3_free(_M);

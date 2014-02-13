@@ -69,7 +69,7 @@ int check_auth(const char *login, const char *passwd)
 #ifdef MIN_UNIX_UID
    if (hisuid < MIN_UNIX_UID) return(STATUS_BLOCKED);
 #endif
-   cpass= crypt(passwd, pwd->pw_passwd);
+   cpass = crypt(passwd, pwd->pw_passwd);
    if (strcmp(cpass, pwd->pw_passwd)) return STATUS_INVALID;
 #ifdef CHECK_LOGIN_EXPIRATION
    if (pwd->pw_expire > 0 && pwd->pw_expire <= now)

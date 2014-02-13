@@ -52,8 +52,6 @@ namespace taiko {
       
       const user_t& get_user(const string& un) const;
       
-      const user_t get_user(const string& un);
-      
       void parse_user_config();
    };
    

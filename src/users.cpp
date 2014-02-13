@@ -6,6 +6,7 @@
 
 #include "users.h"
 #include "confuse.h"
+#include "exception.h"
 
 namespace taiko {
    
@@ -32,17 +33,10 @@ namespace taiko {
    const user_t& users_t::get_user(const string& un) const {
       const_iterator i = find(un);
       if (i == end())
-         throw exception();
+         throw  taiko::exception("failed to find user");
       return i->second;
    }
-   
-   const user_t users_t::get_user(const string& un) {
-      iterator i = find(un);
-      if (i == end())
-         throw exception();
-      return i->second;
-   }
-   
+      
    void users_t::parse_user_config() {
       cfg_t* cfg;
       
