@@ -98,17 +98,10 @@ public:
     }
     
     bool is_ssl() const {
-        return mg_get_request_info(_connection)->is_ssl > 0;
+        return mg_get_request_info(_connection)->is_ssl > 0 || is_proxy_ssl();
     }
    
-    bool is_proxy_ssl() const {
-       try {
-          return get_header("IS_SSL") == "ssl";
-       } catch (taiko::exception_notfound& e) {
-          return false;
-       }
-    }
-    
+   
     bool has_param(const string& p) const {
         return get.find(p) != get.end() || post.find(p) != post.end();
     }
@@ -128,7 +121,15 @@ public:
     }
    
 private:
-    
+   
+    bool is_proxy_ssl() const {
+      try {
+         return get_header("IS_SSL") == "ssl";
+      } catch (taiko::exception_notfound& e) {
+         return false;
+      }
+    }
+   
     static void parse_query(string q, params_t& p)  {
         while (!q.empty()) {
             string::size_type amp = q.find('&');
