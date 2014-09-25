@@ -160,9 +160,8 @@ namespace opkele {
 			return *this;
 		    }
 		    basic_filterator<IT> operator++(int) {
-			basic_filterator<IT> rv(*this);
 			++(*this);
-			return rv;
+			return *this;
 		    }
 
 		    void prepare() {

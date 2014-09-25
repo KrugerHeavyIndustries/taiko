@@ -24,8 +24,8 @@ solution "taikod"
       
       language "C++"
 
-      includedirs { "external/libopkele/include", "/usr/local/Cellar/libconfuse/2.7/include" }
-      libdirs { "/usr/local/Cellar/libconfuse/2.7/lib" }
+      includedirs { "external/libopkele/include", "/usr/local/include" }
+      libdirs { "/usr/local/lib" }
 
       files { "src/**.h", "src/**.cpp", "src/**.c" }
 
