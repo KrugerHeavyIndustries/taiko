@@ -159,7 +159,7 @@ namespace opkele {
 			if(!found) empty=true;
 			return *this;
 		    }
-		    basic_filterator<IT> operator++(int) {
+		    basic_filterator<IT>& operator++(int) {
 			++(*this);
 			return *this;
 		    }
