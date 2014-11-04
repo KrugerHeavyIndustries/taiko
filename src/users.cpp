@@ -8,7 +8,7 @@
 #include "confuse.h"
 #include "exception.h"
 
-#define _PATH_TAIKODCONF "/etc/taikod.conf" 
+#define _PATH_TAIKODCONF "/etc/taiko.conf"
 
 namespace taiko {
    
