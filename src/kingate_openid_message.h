@@ -62,9 +62,9 @@ class cut_prefix_filterator : public opkele::util::basic_filterator<IT> {
 
 	cut_prefix_filterator() { }
 	cut_prefix_filterator(const IT& _bi,const IT&_ei,const string& p)
-	    : opkele::util::basic_filterator<IT>(_bi,_ei), pfx(p) {
-		this->prepare();
-	    }
+        : opkele::util::basic_filterator<IT>(_bi,_ei), pfx(p) {
+            this->prepare();
+    }
 
 	bool is_interesting() const {
 	    return pfx.length()==0 || !strncmp(this->it->c_str(),pfx.c_str(),pfx.length());
