@@ -124,7 +124,7 @@ private:
    
     bool is_proxy_ssl() const {
       try {
-         return get_header("IS_SSL") == "ssl" || get_header("X-Forwarded-Proto") == "https";
+		 return get_header("X-Forwarded-Proto") == "https";
       } catch (taiko::exception_notfound& e) {
          return false;
       }
