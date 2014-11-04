@@ -251,7 +251,7 @@ static void* handle_new_request(struct mg_connection* conn) {
              status.tellp() > 0 ? status.str().c_str() : "HTTP/1.1 200 OK\r\n",
              content_type.str().c_str(),
              header.str().c_str(),
-             content.str().size(),
+             (unsigned long)content.str().size(),
              content.str().c_str());
    
    // Mark as processed
