@@ -47,12 +47,13 @@
 #define HAVE_SYS_TYPES_H 1
 
 /* Define to 1 if you have the <tidy.h> header file. */
-#if defined(__linux__)
+/*#if defined(__linux__)
 #define HAVE_TIDY_H
 #endif 
+*/
 
 /* Define to 1 if you have the <tidy/tidy.h> header file. */
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__linux__)
 #define HAVE_TIDY_TIDY_H 1
 #endif 
 

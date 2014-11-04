@@ -30,7 +30,7 @@ solution "taikod"
       files { "src/**.h", "src/**.cpp", "src/**.c" }
 
       links { 
-         "sqlite3", "curl", "expat", "ssl", "crypto", "z", "tidy", "libopkele",
+         "opkele", "sqlite3", "curl", "expat", "ssl", "crypto", "z", "tidy", 
          "confuse"
       }
 
@@ -48,9 +48,11 @@ solution "taikod"
          links { "pam" }
 
       configuration "linux" 
-         links { "dl", "uuid", "crypt" }
+	 defines { "PAM" }
+         libdirs { "/lib/i386-linux-gnu", "/usr/lib/i386-linux-gnu" }
+	 links { "dl", "uuid", "pthread", "pam" }
 
-   project "libopkele"
+   project "opkele"
 
       language "C++"
 
