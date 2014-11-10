@@ -1,0 +1,10 @@
+Source: taiko
+Maintainer: 
+Section: misc
+Priority: optional
+Build-Depends: debhelper (>= 9), premake4, libssl-dev, libcurl4-openssl-dev, libexpat-dev, libtidy-dev, uuid-dev, libsqlite3-dev, libconfuse-dev, libpam0g-dev
+
+Package: taiko
+Architecture: any
+Depends: 
+Description: 

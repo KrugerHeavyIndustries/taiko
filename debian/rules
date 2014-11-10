@@ -1,0 +1,14 @@
+#!/usr/bin/make -f
+%:
+	dh $@
+
+override_dh_auto_configure:
+	premake4 gmake
+
+override_dh_auto_build:
+	(cd build; make config=release verbose=true)
+	
+override_dh_auto_clean:
+	rm -rf build	
+	rm -rf bin
+	dh_clean
