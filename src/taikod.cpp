@@ -9,6 +9,9 @@
 #include <opkele/uris.h>
 #include <opkele/sreg.h>
 #include <uuid/uuid.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <syslog.h>
 #include "sqlite.h"
 #include "utils.h"
 #include "cookies.h"
@@ -20,16 +23,14 @@
 
 #include "taiko_op.h"
 
-#define _PATH_TAIKODCONF "/etc/taikod.conf" 
-
-static const char* OK = "";
+#define ENFORCE_SSL 1
 
 using namespace std;
 using namespace taiko;
 
 users_t users;
 
-static void* handle_new_request(struct mg_connection* conn) {
+static int handle_request(struct mg_connection* conn) {
    
    mongoose_connection_t mc(conn);
    
@@ -38,15 +39,17 @@ static void* handle_new_request(struct mg_connection* conn) {
    ostringstream content_type;
    ostringstream content;
 
+#if defined(ENFORCE_SSL)
    if (!mc.is_ssl())
       throw taiko::exception("SSL connection required");
-      
+#endif 
+   
    string op;
    if (mc.has_param("op"))
       op = mc.get_param("op");
    
    string message;
-   if(op=="login") {
+   if (op=="login") {
       taiko_op_t OP(mc);
       string username = mc.get_param("username");
       string password = mc.get_param("password");
@@ -69,7 +72,7 @@ static void* handle_new_request(struct mg_connection* conn) {
       } else {
          throw taiko::exception("wrong password or username");
       }
-   }else if(op=="logout") {
+   } else if(op=="logout") {
       taiko_op_t OP(mc);
       OP.set_authorized(false);
       op.clear();
@@ -78,7 +81,7 @@ static void* handle_new_request(struct mg_connection* conn) {
    string omode;
    if (mc.has_param("openid.mode"))
       omode = mc.get_param("openid.mode");
-   if(op=="xrds") {
+   if (op=="xrds") {
       content_type <<
       "Content-Type: application/xrds+xml\r\n";
       content <<
@@ -98,7 +101,7 @@ static void* handle_new_request(struct mg_connection* conn) {
       content <<
       "</XRD>"
       "</xrds:XRDS>";
-   }else if(op=="id_res" || op=="cancel") {
+   } else if (op=="id_res" || op=="cancel") {
       kingate_openid_message_t inm(mc);
       taiko_op_t OP(mc);
       if (mc.get_param("hts_id") != OP.htc.get_value())
@@ -107,7 +110,7 @@ static void* handle_new_request(struct mg_connection* conn) {
       OP.checkid_(inm, sreg);
       OP.cookie_header(header);
       opkele::openid_message_t om;
-      if(op=="id_res") {
+      if (op=="id_res") {
          if(!OP.get_authorized())
             throw taiko::exception("not logged in");
          if(OP.is_id_select()) {
@@ -255,38 +258,43 @@ static void* handle_new_request(struct mg_connection* conn) {
              content.str().c_str());
    
    // Mark as processed
-   return static_cast<void*>(&OK);
+   return MG_TRUE;
 }
 
-static void* callback(enum mg_event event, struct mg_connection *conn) {
-   if (event == MG_NEW_REQUEST) {
-      try {
-         return handle_new_request(conn);
-      } catch (taiko::exception& e) {
-         mg_printf(conn,
-                   "HTTP/1.1 200 OK\r\n"
-                   "Content-Type: text/plain\r\n"
-                   "Content-Length: %lu\r\n"  // Always set Content-Length
-                   "\r\n"
-                   "%s",
-                   e.what().size(),
-                   e.what().c_str());
-         return static_cast<void*>(&OK);
-      }
-   } else {
-      return NULL;
+static int ev_handler(struct mg_connection *conn, enum mg_event event) {
+   switch (event) {
+      case MG_AUTH:
+         return MG_TRUE;
+      case MG_REQUEST:
+         try {
+            return handle_request(conn);
+         } catch (taiko::exception& e) {
+            mg_printf(conn,
+                      "HTTP/1.1 200 OK\r\n"
+                      "Content-Type: text/plain\r\n"
+                      "Content-Length: %lu\r\n"  // Always set Content-Length
+                      "\r\n"
+                      "%s",
+                      e.what().size(),
+                      e.what().c_str());
+            return MG_TRUE;
+         }
+      default: return MG_FALSE;
    }
 }
 
 int main(int argc, char** arg) {
-   struct mg_context *ctx;
-   const char *options[] = {"listening_ports", "8080", NULL};
+   struct mg_server *server = NULL;
    
    users.parse_user_config();
    
-   ctx = mg_start(&callback, NULL, options);
-   getchar();  // Wait until user hits "enter"
-   mg_stop(ctx);
-
-   return 0;
+   server = mg_create_server(NULL, ev_handler);
+   mg_set_option(server, "listening_port", "8080");
+   
+   for (;;) {
+      mg_poll_server(server, 1000);
+   }
+   mg_destroy_server(&server);
+   
+   return EXIT_SUCCESS;
 }

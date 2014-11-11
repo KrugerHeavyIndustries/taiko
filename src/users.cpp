@@ -10,6 +10,8 @@
 
 #define _PATH_TAIKODCONF "/etc/taiko.conf"
 
+//#define _PATH_TAIKODCONF "taiko.conf"
+
 namespace taiko {
    
    int validate_user_callback(cfg_t* cfg, cfg_opt_t* opt) {
