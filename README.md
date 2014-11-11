@@ -34,6 +34,14 @@ open build/taikod.xcodeproj
 
 Build and run
 
+### Configuration 
+
+Copy the example configuration file to /etc/taiko.conf
+
+Enable a user in a section. Any user enabled will require a section in here in order to authenticate against taiko. 
+
+Within the section you can add OpenID attributes. Currently supported are name and email. 
+
 ### Setting up PAM configuration for taiko 
 
 Create a file in /etc/pam.d/ called taiko with the following in it
