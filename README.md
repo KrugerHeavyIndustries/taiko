@@ -25,6 +25,7 @@ After cloning the repo install premake (via homebrew - recommended)
 (in the taiko directory)
 
 brew install premake
+brew install confuse (libconfuse dependency)
 
 premake4 xcode3 
 
