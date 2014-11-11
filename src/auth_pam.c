@@ -174,11 +174,11 @@ int PAM_conv (int num_msg, struct pam_message **msg,
 #endif
       
 #ifdef PAM_SOLARIS_26
-      user_info.login= login;
-      user_info.passwd= passwd;
+      user_info.login = login;
+      user_info.passwd = passwd;
 #endif /* PAM_SOLARIS_26 */
       
-      retval= pam_start("openidd", login, &conv, &pamh);
+      retval = pam_start("taiko", login, &conv, &pamh);
       
       if (retval == PAM_SUCCESS)
          retval= pam_authenticate(pamh, PAM_SILENT);
