@@ -45,6 +45,7 @@
 #include <unistd.h>
 #include <pwd.h>
 
+
 /* ===================== NONE Authentication ===================== */
 
 /* CHECK_AUTH - Check a login and return a status code.

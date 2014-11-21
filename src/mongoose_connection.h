@@ -1,11 +1,41 @@
-//
-//  mongoose_connection.h
-//  openidserver
-//
-//  Created by Chris Kruger on 27/01/13.
-//
-//
-
+/*
+ *	__  __ ______ _______ _______ _______ ______ 
+ *	|  |/  |   __ \   |   |     __|    ___|   __ \
+ *	|     <|      <   |   |    |  |    ___|      <
+ *	|__|\__|___|__|_______|_______|_______|___|__|
+ *	       H E A V Y  I N D U S T R I E S
+ *
+ *	Copyright (C) 2014 Krüger Heavy Industries
+ *	http://www.krugerheavyindustries.com
+ *
+ * Written by Chris Kruger AT krugerheavyindustries.com
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * * Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the following disclaimer.
+ *
+ * * Redistributions in binary form must reproduce the above
+ *   copyright notice, this list of conditions and the following
+ *   disclaimer in the documentation and/or other materials provided
+ *   with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 #ifndef _TAIKO_MONGOOSE_CONNECTION_H_
 #define _TAIKO_MONGOOSE_CONNECTION_H_
 
@@ -16,7 +46,6 @@
 #include "mongoose.h"
 #include "cookies.h"
 #include "utils.h"
-
 
 namespace taiko {
    using namespace std;
@@ -60,31 +89,27 @@ public:
     }
     
     string get_request_method() const {
-        const char* rm = mg_get_request_info(_connection)->request_method;
-        return rm == NULL ? "" : rm;
+        return _connection->request_method == NULL ? "" : _connection->request_method;
     }
     
     string get_query_string() const {
-        const char* qs = mg_get_request_info(_connection)->query_string;
-        return qs == NULL ? "" : qs;
+        return _connection->query_string == NULL ? "" : _connection->query_string;
     }
     
     string get_request_body() const {
-        char post_data[1024];
-        int post_data_len = mg_read(_connection, post_data, sizeof(post_data));
-        if (post_data_len > 0) {
-            post_data[post_data_len + 1] = '\0';
+         string post_data;
+        if (_connection->content_len > 0) {
+            post_data.assign(_connection->content, _connection->content_len);
+            post_data.push_back('\0');
             return post_data;
         }
         return "";
     }
     
     string get_header(const string& mn) const {
-        mg_request_info* info = mg_get_request_info(_connection);
-        
-        for(int i = 0; i < sizeof(info->http_headers) / sizeof(struct mg_request_info::mg_header); ++i) {
-            if (info->http_headers[i].name && mn == info->http_headers[i].name)
-                return info->http_headers[i].value;
+        for(int i = 0; i < sizeof(_connection->http_headers) / sizeof(struct mg_connection::mg_header); ++i) {
+            if (_connection->http_headers[i].name && mn == _connection->http_headers[i].name)
+                return _connection->http_headers[i].value;
         }
        throw taiko::exception_notfound("no such meta-variable ('" + mn + "')");
     }
@@ -92,15 +117,15 @@ public:
     kingate::cookie get_cookie(const string& name) {
         const size_t buf_len = 256;
         char buf[buf_len];
-        if (mg_get_cookie(_connection, name.c_str(), buf, buf_len) == 0)
+        const char* cookie = mg_get_header(_connection, "Cookie");
+        if (cookie == NULL || mg_parse_header(cookie, name.c_str(), buf, buf_len) == 0)
            throw taiko::exception_notfound("no such cookie ('" + name + "')");
         return kingate::cookie(name, buf);
     }
     
     bool is_ssl() const {
-        return mg_get_request_info(_connection)->is_ssl > 0 || is_proxy_ssl();
+        return is_proxy_ssl();
     }
-   
    
     bool has_param(const string& p) const {
         return get.find(p) != get.end() || post.find(p) != post.end();
@@ -117,14 +142,14 @@ public:
     }
     
     int remote_port() const {
-        return mg_get_request_info(_connection)->remote_port;
+        return _connection->remote_port;
     }
    
 private:
    
     bool is_proxy_ssl() const {
       try {
-		 return get_header("X-Forwarded-Proto") == "https";
+         return get_header("X-Forwarded-Proto") == "https";
       } catch (taiko::exception_notfound& e) {
          return false;
       }
