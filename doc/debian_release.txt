@@ -1,0 +1,7 @@
+
+1. Tag the master branch with the release: 
+	git tag -a release/VERSION -m "VERSION message"
+
+2. Merge the code you want to release from master into upstream branch
+
+3. 
