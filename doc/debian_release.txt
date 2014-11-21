@@ -5,3 +5,19 @@
 2. Merge the code you want to release from master into upstream branch
 
 3. 
+
+NOTES
+-----
+
+Build-Dependencies:
+	libssl-dev 
+	libcurl4-openssl-dev
+	libexpat-dev
+	uuid-dev
+	libsqlite3-dev
+	libconfuse-dev
+	libpam-dev
+
+dch --create -v 0.1.5 --package taiko
+debuild -us -uc
+git-import-orig --uscan
