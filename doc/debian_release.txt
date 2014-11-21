@@ -1,10 +1,23 @@
+1. Hack away in master until ready to release
 
-1. Tag the master branch with the release: 
-	git tag -a release/VERSION -m "VERSION message"
+2. Update the script/archive.sh with the correct version TAG and commit this file
+   Tag the master branch with the release: 
+      git tag -a release/VERSION -m "VERSION message"
+
+   Be careful not to make any more changes
+
+   Run the script/archive.sh to create the tarball we want
 
 2. Merge the code you want to release from master into upstream branch
+	git checkout upstream 
+	git merge master 
 
-3. 
+3. Merge the code from upstream in debian branch 
+	git checkout debian 
+	git merge master 
+
+4. Build the package with: 
+	debuild -us -uc
 
 NOTES
 -----
